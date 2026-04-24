@@ -59,13 +59,20 @@ const StatusIndicator: FC<{ status: VideoJob['status'] }> = ({ status }) => {
 export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
   const { toast } = useToast();
 
+  // Helper to construct absolute URL for sharing/copying
+  const getAbsoluteUrl = (url: string) => {
+    if (typeof window === 'undefined') return url;
+    return new URL(url, window.location.origin).href;
+  }
+
   const handleCopyLink = () => {
     if (!job.outputUrl) return;
-    navigator.clipboard.writeText(job.outputUrl)
+    const absoluteUrl = getAbsoluteUrl(job.outputUrl);
+    navigator.clipboard.writeText(absoluteUrl)
     .then(() => {
         toast({
             title: "تم نسخ الرابط",
-            description: "تم نسخ رابط m3u8 إلى الحافظة.",
+            description: "تم نسخ رابط M3U8 إلى الحافظة.",
         });
     })
     .catch(err => {
@@ -80,13 +87,14 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
 
   const handleShare = async () => {
       if (!job.outputUrl) return;
+      const absoluteUrl = getAbsoluteUrl(job.outputUrl);
 
       if (navigator.share) {
           try {
               await navigator.share({
                   title: job.title,
                   text: `رابط الفيديو المحول: ${job.title}`,
-                  url: job.outputUrl,
+                  url: absoluteUrl,
               });
           } catch (error) {
               console.log('Web Share API canceled or failed.', error);
@@ -101,6 +109,9 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
   };
 
   const isProcessing = job.status === 'downloading' || job.status === 'converting';
+  
+  // The URL to display in the input field can remain relative
+  const displayUrl = job.outputUrl || '';
 
   return (
     <Card className="group flex flex-col overflow-hidden transition-all duration-300 bg-gradient-to-br from-card to-card/90 hover:shadow-xl hover:shadow-primary/10 border-border/60">
@@ -149,10 +160,10 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
               </div>
             </div>
           )}
-          {job.status === 'ready' && job.outputUrl && (
+          {job.status === 'ready' && displayUrl && (
             <div className="space-y-2 pt-2 animate-in fade-in">
-              <Label htmlFor={`output-url-${job.id}`} className="text-xs font-medium">رابط m3u8</Label>
-              <Input id={`output-url-${job.id}`} readOnly dir="ltr" value={job.outputUrl} className="h-9 bg-muted/50 text-xs" />
+              <Label htmlFor={`output-url-${job.id}`} className="text-xs font-medium">رابط M3U8</Label>
+              <Input id={`output-url-${job.id}`} readOnly dir="ltr" value={displayUrl} className="h-9 bg-muted/50 text-xs" />
             </div>
           )}
           {job.status === 'failed' && job.errorMessage && (

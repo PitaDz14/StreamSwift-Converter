@@ -90,7 +90,7 @@ export function ConverterPage() {
                   progress: 100, 
                   speed: undefined, 
                   eta: undefined,
-                  outputUrl: `https://mock-stream.dev/stream/${job.id}/playlist.m3u8`
+                  outputUrl: `/converted/${job.id}/playlist.${job.format || 'm3u8'}`
                 };
               }
               return { ...job, progress: newProgress, statusMessage: 'جاري التحويل...' };
