@@ -142,6 +142,12 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
         <CardTitle className="mb-2 line-clamp-2 h-[3rem] font-headline text-lg">
           {job.title}
         </CardTitle>
+        <div className="mb-3 flex flex-wrap gap-2 text-xs">
+          {job.format && <Badge variant="outline" className="font-mono">الصيغة: {job.format}</Badge>}
+          {job.codec && <Badge variant="outline" className="font-mono">الترميز: {job.codec}</Badge>}
+          {job.bitrate && <Badge variant="outline" className="font-mono">معدل البت: {job.bitrate}</Badge>}
+          {job.resolution && <Badge variant="outline" className="font-mono">الدقة: {job.resolution}</Badge>}
+        </div>
         <div className="space-y-2">
           <div className="flex items-center space-x-2 space-x-reverse text-sm text-muted-foreground">
             <StatusIndicator status={job.status} />
