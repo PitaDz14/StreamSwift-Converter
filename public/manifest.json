@@ -1,0 +1,27 @@
+{
+  "name": "محول StreamSwift",
+  "short_name": "StreamSwift",
+  "description": "تحويل ذكي لصيغ الفيديو",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f26",
+  "theme_color": "#F24F38",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
