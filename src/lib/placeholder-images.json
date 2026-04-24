@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "video-thumb-1",
+      "description": "Abstract neon data stream",
+      "imageUrl": "https://picsum.photos/seed/101/600/400",
+      "imageHint": "data stream"
+    },
+    {
+      "id": "video-thumb-2",
+      "description": "Futuristic server room",
+      "imageUrl": "https://picsum.photos/seed/102/600/400",
+      "imageHint": "server room"
+    },
+    {
+      "id": "video-thumb-3",
+      "description": "Digital audio waveform",
+      "imageUrl": "https://picsum.photos/seed/103/600/400",
+      "imageHint": "audio waveform"
+    },
+    {
+      "id": "video-thumb-4",
+      "description": "Abstract colorful lines",
+      "imageUrl": "https://picsum.photos/seed/104/600/400",
+      "imageHint": "abstract lines"
+    },
+    {
+      "id": "video-thumb-5",
+      "description": "Man editing video on computer",
+      "imageUrl": "https://picsum.photos/seed/105/600/400",
+      "imageHint": "video editing"
+    },
+    {
+      "id": "video-thumb-6",
+      "description": "Glowing fiber optics",
+      "imageUrl": "https://picsum.photos/seed/106/600/400",
+      "imageHint": "fiber optics"
+    }
+  ]
 }
