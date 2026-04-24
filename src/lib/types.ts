@@ -12,4 +12,6 @@ export type VideoJob = {
   bitrate?: string;
   resolution?: string;
   statusMessage: string;
+  progress: number; // 0-100
+  errorMessage?: string;
 };

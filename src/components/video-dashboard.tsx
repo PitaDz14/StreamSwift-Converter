@@ -8,9 +8,10 @@ import { FileQuestion } from 'lucide-react';
 interface VideoDashboardProps {
   jobs: VideoJob[];
   onDelete: (id: string) => void;
+  onRetry: (id: string) => void;
 }
 
-export const VideoDashboard: FC<VideoDashboardProps> = ({ jobs, onDelete }) => {
+export const VideoDashboard: FC<VideoDashboardProps> = ({ jobs, onDelete, onRetry }) => {
   if (jobs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card/50 p-12 text-center">
@@ -24,9 +25,9 @@ export const VideoDashboard: FC<VideoDashboardProps> = ({ jobs, onDelete }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {jobs.map((job) => (
-        <VideoCard key={job.id} job={job} onDelete={onDelete} />
+        <VideoCard key={job.id} job={job} onDelete={onDelete} onRetry={onRetry} />
       ))}
     </div>
   );

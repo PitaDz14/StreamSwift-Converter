@@ -1,22 +1,23 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import type { VideoJob, VideoJobStatus } from '@/lib/types';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import type { VideoJob } from '@/lib/types';
 import { UrlInputForm } from '@/components/url-input-form';
 import { VideoDashboard } from '@/components/video-dashboard';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { LogoIcon } from './icons';
 import { useToast } from '@/hooks/use-toast';
 
-const STATUS_PIPELINE: { status: VideoJobStatus; message: string; duration: number }[] = [
-  { status: 'downloading', message: 'Downloading video from source...', duration: 5000 },
-  { status: 'converting', message: 'Converting to suggested format...', duration: 8000 },
-  { status: 'ready', message: 'Conversion complete and ready for download.', duration: 0 },
-];
+// Constants for simulation
+const DOWNLOAD_SPEED = 2 * 1024 * 1024; // 2 MB/s
+const VIDEO_SIZE = 50 * 1024 * 1024; // 50 MB
+const CONVERT_TIME = 8; // seconds
+const TICK_INTERVAL = 500; // ms
 
 export function ConverterPage() {
   const [videoJobs, setVideoJobs] = useState<VideoJob[]>([]);
   const { toast } = useToast();
+  const activeTimers = useRef<NodeJS.Timeout[]>([]);
 
   const handleAddVideoJob = useCallback((jobData: { url: string, title: string, format?: string, codec?: string, bitrate?: string, resolution?: string }) => {
     const randomImage = PlaceHolderImages[Math.floor(Math.random() * PlaceHolderImages.length)];
@@ -32,6 +33,7 @@ export function ConverterPage() {
       codec: jobData.codec,
       bitrate: jobData.bitrate,
       resolution: jobData.resolution,
+      progress: 0,
     };
     setVideoJobs((prevJobs) => [newJob, ...prevJobs]);
     toast({
@@ -44,58 +46,68 @@ export function ConverterPage() {
     setVideoJobs((prevJobs) => prevJobs.filter((job) => job.id !== id));
   }, []);
 
+  const handleRetryJob = useCallback((id: string) => {
+    setVideoJobs(prevJobs => prevJobs.map(job => 
+      job.id === id 
+        ? { ...job, status: 'pending', statusMessage: 'Retrying...', progress: 0, errorMessage: undefined } 
+        : job
+    ));
+  }, []);
+  
   useEffect(() => {
     const processQueue = () => {
-      setVideoJobs((prevJobs) => {
-        const newJobs = [...prevJobs];
-        let changed = false;
-
-        newJobs.forEach((job, index) => {
-          if (job.status !== 'ready' && job.status !== 'failed') {
-            const currentPipelineIndex = STATUS_PIPELINE.findIndex(p => p.status === job.status) + 1;
-            
-            if (job.status === 'pending' && currentPipelineIndex === 0) {
-               // Initial transition from pending
-               setTimeout(() => {
-                   setVideoJobs(current => {
-                       const jobs = [...current];
-                       const jobIndex = jobs.findIndex(j => j.id === job.id);
-                       if (jobIndex > -1) {
-                           jobs[jobIndex] = { ...jobs[jobIndex], status: STATUS_PIPELINE[0].status, statusMessage: STATUS_PIPELINE[0].message };
-                           return jobs;
-                       }
-                       return current;
-                   });
-               }, 2000); // Wait 2s before starting
-            }
-             else if (currentPipelineIndex > 0 && currentPipelineIndex < STATUS_PIPELINE.length) {
-              const nextStage = STATUS_PIPELINE[currentPipelineIndex];
-              setTimeout(() => {
-                setVideoJobs(current => {
-                  const jobs = [...current];
-                  const jobIndex = jobs.findIndex(j => j.id === job.id);
-                  if (jobIndex > -1 && jobs[jobIndex].status !== 'ready') {
-                    jobs[jobIndex] = { ...jobs[jobIndex], status: nextStage.status, statusMessage: nextStage.message };
-                    return jobs;
-                  }
-                  return current;
-                })
-              }, STATUS_PIPELINE[currentPipelineIndex - 1].duration);
-            }
-          }
-        });
-        
-        return prevJobs; 
+      videoJobs.forEach(job => {
+        if (job.status === 'pending') {
+          // Start processing this job
+          setVideoJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'downloading', statusMessage: 'Starting download...' } : j));
+        }
       });
     };
     
-    const jobToProcess = videoJobs.find(job => job.status === 'pending');
-    if (jobToProcess) {
-      processQueue();
-    }
+    const interval = setInterval(processQueue, 1000);
+    return () => clearInterval(interval);
   }, [videoJobs]);
-  
-  const isProcessing = videoJobs.some(job => job.status !== 'ready' && job.status !== 'failed');
+
+  useEffect(() => {
+    const tick = () => {
+       setVideoJobs(currentJobs => {
+        return currentJobs.map(job => {
+          if (job.status === 'downloading') {
+            const downloadedBytes = (job.progress / 100) * VIDEO_SIZE;
+            const newDownloadedBytes = downloadedBytes + (DOWNLOAD_SPEED * (TICK_INTERVAL / 1000));
+            let newProgress = (newDownloadedBytes / VIDEO_SIZE) * 100;
+            
+            if (newProgress >= 100) {
+              newProgress = 100;
+              // Randomly fail some jobs for demonstration
+              if (Math.random() < 0.2) {
+                 return { ...job, status: 'failed', statusMessage: 'Download failed unexpectedly.', progress: 100, errorMessage: 'Network error during download.' };
+              }
+              return { ...job, status: 'converting', statusMessage: 'Downloaded. Starting conversion...', progress: 0 };
+            }
+            
+            return { ...job, progress: newProgress, statusMessage: `Downloading... (${(DOWNLOAD_SPEED / 1024 / 1024).toFixed(1)} MB/s)` };
+          } 
+          
+          if (job.status === 'converting') {
+            const newProgress = job.progress + (100 / (CONVERT_TIME * (1000 / TICK_INTERVAL)));
+
+            if (newProgress >= 100) {
+              return { ...job, status: 'ready', statusMessage: 'Conversion complete!', progress: 100 };
+            }
+            return { ...job, progress: newProgress, statusMessage: 'Converting video...' };
+          }
+          
+          return job;
+        });
+      });
+    };
+
+    const timer = setInterval(tick, TICK_INTERVAL);
+    return () => clearInterval(timer);
+  }, []);
+
+  const isProcessing = videoJobs.some(job => job.status === 'downloading' || job.status === 'converting');
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -115,7 +127,7 @@ export function ConverterPage() {
         </div>
         
         <div className="mb-8">
-          <VideoDashboard jobs={videoJobs} onDelete={handleDeleteVideoJob} />
+          <VideoDashboard jobs={videoJobs} onDelete={handleDeleteVideoJob} onRetry={handleRetryJob} />
         </div>
       </main>
       

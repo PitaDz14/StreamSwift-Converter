@@ -116,10 +116,10 @@ export function UrlInputForm({ onAddJob, isProcessing }: UrlInputFormProps) {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full h-12" disabled={isProcessing}>
+          <Button type="submit" className="w-full h-12" disabled={isProcessing || form.formState.isSubmitting || !form.formState.isValid}>
             {isProcessing ? (
               <>
-                <Loader className="mr-2 h-4 w-4 animate-spin" /> Processing...
+                <Loader className="mr-2 h-4 w-4 animate-spin" /> Processing Queue...
               </>
             ) : (
               'Convert Now'
