@@ -29,6 +29,14 @@ interface VideoCardProps {
   onRetry: (id: string) => void;
 }
 
+const statusTranslations: Record<VideoJob['status'], string> = {
+  pending: 'قيد الانتظار',
+  downloading: 'جار التحميل',
+  converting: 'جار التحويل',
+  ready: 'جاهز',
+  failed: 'فشل',
+};
+
 const StatusIndicator: FC<{ status: VideoJob['status'] }> = ({ status }) => {
   const commonClasses = "h-5 w-5";
   switch (status) {
@@ -51,8 +59,8 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
 
   const handleDownload = () => {
     toast({
-      title: "Download Initiated",
-      description: `Preparing to download ${job.title}.`,
+      title: "بدء التحميل",
+      description: `جاري التحضير لتحميل ${job.title}.`,
     });
     // In a real app, this would trigger a file download.
   };
@@ -72,7 +80,7 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </div>
-        <div className="absolute right-2 top-2">
+        <div className="absolute left-2 top-2">
           <Badge
             variant={job.status === 'failed' ? 'destructive' : 'secondary'}
             className={cn('capitalize text-xs', {
@@ -80,7 +88,7 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
               'bg-primary/20 text-primary-foreground/80 border-primary/30': isProcessing,
             })}
           >
-            {job.status}
+            {statusTranslations[job.status]}
           </Badge>
         </div>
       </CardHeader>
@@ -99,10 +107,10 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
               {isProcessing && (
                 <div className="mt-1.5 flex justify-between text-xs text-muted-foreground">
                   <span>
-                    {job.speed !== undefined ? `${job.speed.toFixed(1)} MB/s` : '...'}
+                    {job.speed !== undefined ? `${job.speed.toFixed(1)} ميجابايت/ثانية` : '...'}
                   </span>
                   <span>
-                    {job.eta !== undefined ? `${job.eta}s remaining` : '...'}
+                    {job.eta !== undefined ? `${job.eta} ثانية متبقية` : '...'}
                   </span>
                 </div>
               )}
@@ -115,7 +123,7 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <TooltipProvider>
-          <div className="flex w-full justify-end space-x-2">
+          <div className="flex w-full justify-start space-x-2 space-x-reverse">
              {job.status === 'failed' && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -123,13 +131,13 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
                     variant="outline"
                     size="icon"
                     onClick={() => onRetry(job.id)}
-                    aria-label="Retry"
+                    aria-label="إعادة المحاولة"
                   >
                     <RotateCw className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Retry Job</p>
+                  <p>إعادة محاولة المهمة</p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -140,13 +148,13 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
                   size="icon"
                   disabled={job.status !== 'ready'}
                   onClick={handleDownload}
-                  aria-label="Download"
+                  aria-label="تنزيل"
                 >
                   <Download className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Download</p>
+                <p>تنزيل</p>
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -155,13 +163,13 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
                   variant="destructive"
                   size="icon"
                   onClick={() => onDelete(job.id)}
-                  aria-label="Delete"
+                  aria-label="حذف"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Delete Job</p>
+                <p>حذف المهمة</p>
               </TooltipContent>
             </Tooltip>
           </div>

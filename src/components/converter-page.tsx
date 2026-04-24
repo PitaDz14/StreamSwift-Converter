@@ -22,11 +22,11 @@ export function ConverterPage() {
     const newJob: VideoJob = {
       id: crypto.randomUUID(),
       url: jobData.url,
-      title: jobData.title || 'Untitled Conversion',
+      title: jobData.title || 'تحويل بدون عنوان',
       thumbnail: randomImage.imageUrl,
       thumbnailHint: randomImage.imageHint,
       status: 'pending',
-      statusMessage: 'In queue for processing...',
+      statusMessage: 'في قائمة الانتظار للمعالجة...',
       format: jobData.format,
       codec: jobData.codec,
       bitrate: jobData.bitrate,
@@ -36,8 +36,8 @@ export function ConverterPage() {
     };
     setVideoJobs((prevJobs) => [newJob, ...prevJobs]);
     toast({
-        title: "Conversion Added",
-        description: "Your video has been added to the queue.",
+        title: "تمت إضافة التحويل",
+        description: "تمت إضافة الفيديو إلى قائمة الانتظار.",
     });
   }, [toast]);
 
@@ -48,7 +48,7 @@ export function ConverterPage() {
   const handleRetryJob = useCallback((id: string) => {
     setVideoJobs(prevJobs => prevJobs.map(job => 
       job.id === id 
-        ? { ...job, status: 'pending', statusMessage: 'Retrying...', progress: 0, errorMessage: undefined, speed: undefined, eta: undefined } 
+        ? { ...job, status: 'pending', statusMessage: 'إعادة المحاولة...', progress: 0, errorMessage: undefined, speed: undefined, eta: undefined } 
         : job
     ));
   }, []);
@@ -73,19 +73,19 @@ export function ConverterPage() {
               
               if (newProgress >= 100) {
                  if (Math.random() < 0.1) { // 10% failure rate
-                   return { ...job, status: 'failed', statusMessage: 'Download failed unexpectedly.', progress: 100, errorMessage: 'Network error during download.', speed: undefined, eta: undefined };
+                   return { ...job, status: 'failed', statusMessage: 'فشل التحميل بشكل غير متوقع.', progress: 100, errorMessage: 'خطأ في الشبكة أثناء التحميل.', speed: undefined, eta: undefined };
                  }
-                return { ...job, status: 'converting', statusMessage: 'Downloaded. Converting...', progress: 0, speed: undefined, eta: undefined };
+                return { ...job, status: 'converting', statusMessage: 'اكتمل التحميل. جاري التحويل...', progress: 0, speed: undefined, eta: undefined };
               }
-              return { ...job, progress: newProgress, statusMessage: `Downloading...`, speed: speedMBps, eta };
+              return { ...job, progress: newProgress, statusMessage: `جاري التحميل...`, speed: speedMBps, eta };
             }
 
             if (job.status === 'converting') {
               const newProgress = job.progress + (100 / (CONVERT_TIME * (1000 / TICK_INTERVAL)));
               if (newProgress >= 100) {
-                return { ...job, status: 'ready', statusMessage: 'Conversion complete!', progress: 100, speed: undefined, eta: undefined };
+                return { ...job, status: 'ready', statusMessage: 'اكتمل التحويل!', progress: 100, speed: undefined, eta: undefined };
               }
-              return { ...job, progress: newProgress, statusMessage: 'Converting...' };
+              return { ...job, progress: newProgress, statusMessage: 'جاري التحويل...' };
             }
             return job;
           });
@@ -95,7 +95,7 @@ export function ConverterPage() {
           if (pendingJobIndex !== -1) {
             return currentJobs.map((job, index) => 
               index === pendingJobIndex 
-                ? { ...job, status: 'downloading', statusMessage: 'Starting download...' }
+                ? { ...job, status: 'downloading', statusMessage: 'بدء التحميل...' }
                 : job
             );
           }
@@ -117,8 +117,8 @@ export function ConverterPage() {
         <div className="flex items-center space-x-3">
           <LogoIcon className="h-10 w-10 text-primary" />
           <div>
-            <h1 className="font-headline text-3xl font-bold">StreamSwift Converter</h1>
-            <p className="text-muted-foreground">Intelligent Video Format Conversion</p>
+            <h1 className="font-headline text-3xl font-bold">محول StreamSwift</h1>
+            <p className="text-muted-foreground">تحويل ذكي لصيغ الفيديو</p>
           </div>
         </div>
       </header>
@@ -135,7 +135,7 @@ export function ConverterPage() {
       
       <footer className="w-full py-4">
         <p className="text-center text-sm text-muted-foreground">
-          Developed by Khaled_Deragha
+          تم التطوير بواسطة Khaled_Deragha
         </p>
       </footer>
     </div>

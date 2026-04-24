@@ -30,7 +30,7 @@ const IntelligentFormatSuggestionOutputSchema = z.object({
   codec: z.string().describe('The suggested video codec (e.g., h264, hevc).'),
   bitrate: z.string().describe('The suggested video bitrate for conversion (e.g., "2000k", "auto" for original).'),
   resolution: z.string().describe('The suggested output resolution (e.g., "1920x1080", "original").'),
-  description: z.string().describe('A brief explanation of the suggested parameters.'),
+  description: z.string().describe('شرح موجز للمعلمات المقترحة باللغة العربية.'),
 });
 export type IntelligentFormatSuggestionOutput = z.infer<typeof IntelligentFormatSuggestionOutputSchema>;
 
@@ -53,6 +53,7 @@ Consider the following:
 - For 'bitrate', you can suggest specific values like '2000k', '5000k', or 'auto' to match the original if appropriate.
 - For 'resolution', you can suggest specific values like '1920x1080', '1280x720', or 'original' to keep the source resolution.
 - Always suggest either 'm3u8' or 'ts' for the format.
+- The user's language is Arabic. The final 'description' field MUST be in Arabic.
 
 YouTube Video URL: {{{youtubeUrl}}}
 
@@ -65,7 +66,7 @@ Video Metadata:
 {{#if videoMetadata.audioChannels}}- Audio Channels: {{{videoMetadata.audioChannels}}}{{/if}}
 {{#if videoMetadata.originalFormat}}- Original Format: {{{videoMetadata.originalFormat}}}{{/if}}
 
-Based on this, what are the optimal encoding parameters and why?`,
+Based on this, what are the optimal encoding parameters and why? Provide the description in Arabic.`,
 });
 
 const intelligentFormatSuggestionFlow = ai.defineFlow(

@@ -13,7 +13,7 @@ function getMockVideoMetadata(url: string) {
   const randomResolution = resolutions[Math.floor(Math.random() * resolutions.length)];
   
   return {
-    title: `Sample Video Title from ${url.substring(0, 30)}...`,
+    title: `عنوان فيديو تجريبي من ${url.substring(0, 30)}...`,
     duration: isShortVideo ? 'PT0M45S' : `PT${Math.floor(Math.random() * 10) + 2}M${Math.floor(Math.random() * 60)}S`,
     resolution: randomResolution,
     fps: Math.random() > 0.5 ? 60 : 30,
@@ -28,7 +28,7 @@ export async function getFormatSuggestion(
 ): Promise<IntelligentFormatSuggestionOutput | { error: string }> {
   try {
     if (!url || !/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+/.test(url)) {
-      return { error: 'Please enter a valid YouTube URL.' };
+      return { error: 'الرجاء إدخال رابط يوتيوب صالح.' };
     }
 
     const videoMetadata = getMockVideoMetadata(url);
@@ -41,6 +41,6 @@ export async function getFormatSuggestion(
     return suggestion;
   } catch (e) {
     console.error('AI suggestion failed:', e);
-    return { error: 'Could not get AI suggestion. Please try again.' };
+    return { error: 'تعذر الحصول على اقتراح الذكاء الاصطناعي. الرجاء المحاولة مرة أخرى.' };
   }
 }

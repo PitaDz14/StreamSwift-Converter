@@ -22,7 +22,7 @@ import { Card, CardContent } from './ui/card';
 import { Badge } from '@/components/ui/badge';
 
 const formSchema = z.object({
-  url: z.string().url({ message: 'Please enter a valid YouTube URL.' }),
+  url: z.string().url({ message: 'الرجاء إدخال رابط يوتيوب صالح.' }),
 });
 
 interface UrlInputFormProps {
@@ -49,28 +49,10 @@ export function UrlInputForm({ onAddJob, isProcessing }: UrlInputFormProps) {
     },
   });
 
-  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    form.setValue('url', e.target.value);
-    const url = e.target.value;
-    if (/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+/.test(url)) {
-      setSuggestion(null);
-      startAiTransition(async () => {
-        const result = await getFormatSuggestion(url);
-        if ('error' in result) {
-          console.warn(result.error);
-        } else {
-          setSuggestion(result);
-        }
-      });
-    } else {
-      setSuggestion(null);
-    }
-  };
-
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     onAddJob({
       url: values.url,
-      title: suggestion?.description || `Conversion for ${values.url}`,
+      title: suggestion?.description || `تحويل للرابط ${values.url}`,
       ...suggestion,
     });
     form.reset();
@@ -83,8 +65,8 @@ export function UrlInputForm({ onAddJob, isProcessing }: UrlInputFormProps) {
     } else {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'URL field is empty.',
+        title: 'خطأ',
+        description: 'حقل الرابط فارغ.',
       });
     }
   }
@@ -98,15 +80,31 @@ export function UrlInputForm({ onAddJob, isProcessing }: UrlInputFormProps) {
             name="url"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="sr-only">YouTube URL</FormLabel>
+                <FormLabel className="sr-only">رابط يوتيوب</FormLabel>
                 <div className="relative">
-                  <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Youtube className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <FormControl>
                     <Input
                       {...field}
-                      onChange={handleUrlChange}
-                      placeholder="Paste a YouTube URL here..."
-                      className="pl-10 h-12 text-base"
+                      onChange={(e) => {
+                        field.onChange(e); // Propagate change to react-hook-form
+                        const url = e.target.value;
+                        if (/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+/.test(url)) {
+                          setSuggestion(null);
+                          startAiTransition(async () => {
+                            const result = await getFormatSuggestion(url);
+                            if ('error' in result) {
+                              console.warn(result.error);
+                            } else {
+                              setSuggestion(result);
+                            }
+                          });
+                        } else {
+                          setSuggestion(null);
+                        }
+                      }}
+                      placeholder="الصق رابط يوتيوب هنا..."
+                      className="pr-10 h-12 text-base"
                       disabled={isProcessing}
                     />
                   </FormControl>
@@ -118,10 +116,10 @@ export function UrlInputForm({ onAddJob, isProcessing }: UrlInputFormProps) {
           <Button type="submit" className="w-full h-12" disabled={isProcessing || form.formState.isSubmitting || !form.formState.isValid}>
             {isProcessing ? (
               <>
-                <Loader className="mr-2 h-4 w-4 animate-spin" /> Processing Queue...
+                <Loader className="h-4 w-4 animate-spin" /> جاري معالجة القائمة...
               </>
             ) : (
-              'Start Conversion'
+              'بدء التحويل'
             )}
           </Button>
         </form>
@@ -130,8 +128,8 @@ export function UrlInputForm({ onAddJob, isProcessing }: UrlInputFormProps) {
       <div className="mt-4 min-h-[120px]">
         {isAiPending && (
           <div className="flex items-center justify-center p-4 text-muted-foreground">
-             <Loader className="mr-2 h-4 w-4 animate-spin" />
-             <span>Analyzing video for optimal settings...</span>
+             <Loader className="h-4 w-4 animate-spin" />
+             <span>جاري تحليل الفيديو لأفضل الإعدادات...</span>
           </div>
         )}
         {suggestion && !isAiPending && (
@@ -143,13 +141,13 @@ export function UrlInputForm({ onAddJob, isProcessing }: UrlInputFormProps) {
                     <Wand2 className="h-5 w-5" />
                   </span>
                   <div>
-                    <h4 className="font-headline font-semibold">AI Suggestion</h4>
+                    <h4 className="font-headline font-semibold">اقتراح الذكاء الاصطناعي</h4>
                     <p className="text-sm text-muted-foreground">{suggestion.description}</p>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                        <Badge variant="outline">Format: {suggestion.format}</Badge>
-                        <Badge variant="outline">Codec: {suggestion.codec}</Badge>
-                        <Badge variant="outline">Bitrate: {suggestion.bitrate}</Badge>
-                        <Badge variant="outline">Resolution: {suggestion.resolution}</Badge>
+                        <Badge variant="outline">الصيغة: {suggestion.format}</Badge>
+                        <Badge variant="outline">الترميز: {suggestion.codec}</Badge>
+                        <Badge variant="outline">معدل البت: {suggestion.bitrate}</Badge>
+                        <Badge variant="outline">الدقة: {suggestion.resolution}</Badge>
                     </div>
                   </div>
                  </div>

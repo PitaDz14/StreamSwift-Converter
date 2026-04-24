@@ -16,9 +16,9 @@ export const VideoDashboard: FC<VideoDashboardProps> = ({ jobs, onDelete, onRetr
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card/50 p-12 text-center transition-colors hover:border-primary/40">
         <FileQuestion className="mb-4 h-12 w-12 text-muted-foreground" />
-        <h3 className="font-headline text-xl font-bold">Your queue is empty</h3>
+        <h3 className="font-headline text-xl font-bold">قائمة الانتظار فارغة</h3>
         <p className="text-muted-foreground">
-          Paste a YouTube URL above to start your first conversion.
+          الصق رابط يوتيوب في الأعلى لبدء أول عملية تحويل.
         </p>
       </div>
     );
