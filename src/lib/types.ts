@@ -17,4 +17,5 @@ export type VideoJob = {
   size: number; // in bytes
   speed?: number; // in MB/s
   eta?: number; // in seconds
+  outputUrl?: string;
 };

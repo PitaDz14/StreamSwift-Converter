@@ -2,10 +2,12 @@
 
 import type { FC } from 'react';
 import Image from 'next/image';
-import { CheckCircle2, Download, Loader, Trash2, XCircle, RotateCw } from 'lucide-react';
+import { CheckCircle2, Copy, Loader, Share2, Trash2, XCircle, RotateCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
@@ -57,12 +59,45 @@ const StatusIndicator: FC<{ status: VideoJob['status'] }> = ({ status }) => {
 export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
   const { toast } = useToast();
 
-  const handleDownload = () => {
-    toast({
-      title: "بدء التحميل",
-      description: `جاري التحضير لتحميل ${job.title}.`,
+  const handleCopyLink = () => {
+    if (!job.outputUrl) return;
+    navigator.clipboard.writeText(job.outputUrl)
+    .then(() => {
+        toast({
+            title: "تم نسخ الرابط",
+            description: "تم نسخ رابط m3u8 إلى الحافظة.",
+        });
+    })
+    .catch(err => {
+        console.error('Failed to copy: ', err);
+        toast({
+            variant: "destructive",
+            title: "فشل النسخ",
+            description: "لم نتمكن من نسخ الرابط.",
+        });
     });
-    // In a real app, this would trigger a file download.
+  };
+
+  const handleShare = async () => {
+      if (!job.outputUrl) return;
+
+      if (navigator.share) {
+          try {
+              await navigator.share({
+                  title: job.title,
+                  text: `رابط الفيديو المحول: ${job.title}`,
+                  url: job.outputUrl,
+              });
+          } catch (error) {
+              console.log('Web Share API canceled or failed.', error);
+          }
+      } else {
+          toast({
+              variant: "destructive",
+              title: "المشاركة غير مدعومة",
+              description: "متصفحك لا يدعم المشاركة المباشرة.",
+          });
+      }
   };
 
   const isProcessing = job.status === 'downloading' || job.status === 'converting';
@@ -80,7 +115,7 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </div>
-        <div className="absolute left-2 top-2">
+        <div className="absolute right-2 top-2">
           <Badge
             variant={job.status === 'failed' ? 'destructive' : 'secondary'}
             className={cn('capitalize text-xs', {
@@ -97,23 +132,27 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
           {job.title}
         </CardTitle>
         <div className="space-y-2">
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+          <div className="flex items-center space-x-2 space-x-reverse text-sm text-muted-foreground">
             <StatusIndicator status={job.status} />
             <p className="truncate">{job.statusMessage}</p>
           </div>
-          {(isProcessing || job.status === 'ready') && (
+          {isProcessing && (
             <div>
               <Progress value={job.progress} className="h-2 w-full" />
-              {isProcessing && (
-                <div className="mt-1.5 flex justify-between text-xs text-muted-foreground">
-                  <span>
-                    {job.speed !== undefined ? `${job.speed.toFixed(1)} ميجابايت/ثانية` : '...'}
-                  </span>
-                  <span>
-                    {job.eta !== undefined ? `${job.eta} ثانية متبقية` : '...'}
-                  </span>
-                </div>
-              )}
+              <div className="mt-1.5 flex justify-between text-xs text-muted-foreground">
+                <span>
+                  {job.speed !== undefined ? `${job.speed.toFixed(1)} ميجابايت/ثانية` : '...'}
+                </span>
+                <span>
+                  {job.eta !== undefined ? `${job.eta} ثانية متبقية` : '...'}
+                </span>
+              </div>
+            </div>
+          )}
+          {job.status === 'ready' && job.outputUrl && (
+            <div className="space-y-2 pt-2 animate-in fade-in">
+              <Label htmlFor={`output-url-${job.id}`} className="text-xs font-medium">رابط m3u8</Label>
+              <Input id={`output-url-${job.id}`} readOnly dir="ltr" value={job.outputUrl} className="h-9 bg-muted/50 text-xs" />
             </div>
           )}
           {job.status === 'failed' && job.errorMessage && (
@@ -121,57 +160,47 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
           )}
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-4 pt-2">
         <TooltipProvider>
-          <div className="flex w-full justify-start space-x-2 space-x-reverse">
-             {job.status === 'failed' && (
+          <div className="flex w-full items-center justify-between">
+              <div className="flex items-center gap-2">
+                 {job.status === 'ready' && job.outputUrl && (
+                    <>
+                        <Tooltip>
+                            <TooltipTrigger asChild><Button variant="outline" size="icon" onClick={handleCopyLink}><Copy className="h-4 w-4" /></Button></TooltipTrigger>
+                            <TooltipContent><p>نسخ الرابط</p></TooltipContent>
+                        </Tooltip>
+                        {typeof navigator !== 'undefined' && navigator.share && (
+                           <Tooltip>
+                                <TooltipTrigger asChild><Button variant="outline" size="icon" onClick={handleShare}><Share2 className="h-4 w-4" /></Button></TooltipTrigger>
+                                <TooltipContent><p>مشاركة</p></TooltipContent>
+                            </Tooltip>
+                        )}
+                   </>
+                )}
+                {job.status === 'failed' && (
+                    <Tooltip>
+                        <TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => onRetry(job.id)}><RotateCw className="h-4 w-4" /></Button></TooltipTrigger>
+                        <TooltipContent><p>إعادة المحاولة</p></TooltipContent>
+                    </Tooltip>
+                )}
+              </div>
+
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => onRetry(job.id)}
-                    aria-label="إعادة المحاولة"
-                  >
-                    <RotateCw className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>إعادة محاولة المهمة</p>
-                </TooltipContent>
+                  <TooltipTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => onDelete(job.id)}
+                        aria-label="حذف"
+                      >
+                          <Trash2 className="h-4 w-4" />
+                      </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                      <p>حذف المهمة</p>
+                  </TooltipContent>
               </Tooltip>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  disabled={job.status !== 'ready'}
-                  onClick={handleDownload}
-                  aria-label="تنزيل"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>تنزيل</p>
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => onDelete(job.id)}
-                  aria-label="حذف"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>حذف المهمة</p>
-              </TooltipContent>
-            </Tooltip>
           </div>
         </TooltipProvider>
       </CardFooter>

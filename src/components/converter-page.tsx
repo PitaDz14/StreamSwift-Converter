@@ -48,7 +48,7 @@ export function ConverterPage() {
   const handleRetryJob = useCallback((id: string) => {
     setVideoJobs(prevJobs => prevJobs.map(job => 
       job.id === id 
-        ? { ...job, status: 'pending', statusMessage: 'إعادة المحاولة...', progress: 0, errorMessage: undefined, speed: undefined, eta: undefined } 
+        ? { ...job, status: 'pending', statusMessage: 'إعادة المحاولة...', progress: 0, errorMessage: undefined, speed: undefined, eta: undefined, outputUrl: undefined } 
         : job
     ));
   }, []);
@@ -83,7 +83,15 @@ export function ConverterPage() {
             if (job.status === 'converting') {
               const newProgress = job.progress + (100 / (CONVERT_TIME * (1000 / TICK_INTERVAL)));
               if (newProgress >= 100) {
-                return { ...job, status: 'ready', statusMessage: 'اكتمل التحويل!', progress: 100, speed: undefined, eta: undefined };
+                return { 
+                  ...job, 
+                  status: 'ready', 
+                  statusMessage: 'اكتمل التحويل وجاهز للمشاركة!', 
+                  progress: 100, 
+                  speed: undefined, 
+                  eta: undefined,
+                  outputUrl: `https://mock-stream.dev/stream/${job.id}/playlist.m3u8`
+                };
               }
               return { ...job, progress: newProgress, statusMessage: 'جاري التحويل...' };
             }
@@ -112,9 +120,9 @@ export function ConverterPage() {
   const isQueueActive = videoJobs.some(job => job.status === 'downloading' || job.status === 'converting' || job.status === 'pending');
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col" dir="rtl">
       <header className="container mx-auto max-w-4xl px-4 py-8">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 space-x-reverse">
           <LogoIcon className="h-10 w-10 text-primary" />
           <div>
             <h1 className="font-headline text-3xl font-bold">محول StreamSwift</h1>
