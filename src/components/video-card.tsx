@@ -60,7 +60,7 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
   const isProcessing = job.status === 'downloading' || job.status === 'converting';
 
   return (
-    <Card className="group flex flex-col overflow-hidden transition-all duration-300 bg-gradient-to-br from-card to-card/90 hover:shadow-xl hover:shadow-primary/10">
+    <Card className="group flex flex-col overflow-hidden transition-all duration-300 bg-gradient-to-br from-card to-card/90 hover:shadow-xl hover:shadow-primary/10 border-border/60">
       <CardHeader className="relative p-0">
         <div className="aspect-video w-full overflow-hidden">
           <Image
@@ -94,16 +94,19 @@ export const VideoCard: FC<VideoCardProps> = ({ job, onDelete, onRetry }) => {
             <p className="truncate">{job.statusMessage}</p>
           </div>
           {(isProcessing || job.status === 'ready') && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Progress value={job.progress} className="h-2 w-full" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{Math.round(job.progress)}% complete</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <div>
+              <Progress value={job.progress} className="h-2 w-full" />
+              {isProcessing && (
+                <div className="mt-1.5 flex justify-between text-xs text-muted-foreground">
+                  <span>
+                    {job.speed !== undefined ? `${job.speed.toFixed(1)} MB/s` : '...'}
+                  </span>
+                  <span>
+                    {job.eta !== undefined ? `${job.eta}s remaining` : '...'}
+                  </span>
+                </div>
+              )}
+            </div>
           )}
           {job.status === 'failed' && job.errorMessage && (
              <p className="text-xs text-destructive">{job.errorMessage}</p>

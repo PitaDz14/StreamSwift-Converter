@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { VideoJob } from '@/lib/types';
 import { UrlInputForm } from '@/components/url-input-form';
 import { VideoDashboard } from '@/components/video-dashboard';
@@ -9,15 +9,13 @@ import { LogoIcon } from './icons';
 import { useToast } from '@/hooks/use-toast';
 
 // Constants for simulation
-const DOWNLOAD_SPEED = 2 * 1024 * 1024; // 2 MB/s
-const VIDEO_SIZE = 50 * 1024 * 1024; // 50 MB
+const DOWNLOAD_SPEED = 5 * 1024 * 1024; // 5 MB/s
 const CONVERT_TIME = 8; // seconds
 const TICK_INTERVAL = 500; // ms
 
 export function ConverterPage() {
   const [videoJobs, setVideoJobs] = useState<VideoJob[]>([]);
   const { toast } = useToast();
-  const activeTimers = useRef<NodeJS.Timeout[]>([]);
 
   const handleAddVideoJob = useCallback((jobData: { url: string, title: string, format?: string, codec?: string, bitrate?: string, resolution?: string }) => {
     const randomImage = PlaceHolderImages[Math.floor(Math.random() * PlaceHolderImages.length)];
@@ -34,10 +32,11 @@ export function ConverterPage() {
       bitrate: jobData.bitrate,
       resolution: jobData.resolution,
       progress: 0,
+      size: (Math.random() * 150 + 20) * 1024 * 1024, // Random size 20-170MB
     };
     setVideoJobs((prevJobs) => [newJob, ...prevJobs]);
     toast({
-        title: "Conversion Started",
+        title: "Conversion Added",
         description: "Your video has been added to the queue.",
     });
   }, [toast]);
@@ -49,57 +48,60 @@ export function ConverterPage() {
   const handleRetryJob = useCallback((id: string) => {
     setVideoJobs(prevJobs => prevJobs.map(job => 
       job.id === id 
-        ? { ...job, status: 'pending', statusMessage: 'Retrying...', progress: 0, errorMessage: undefined } 
+        ? { ...job, status: 'pending', statusMessage: 'Retrying...', progress: 0, errorMessage: undefined, speed: undefined, eta: undefined } 
         : job
     ));
   }, []);
   
   useEffect(() => {
-    const processQueue = () => {
-      videoJobs.forEach(job => {
-        if (job.status === 'pending') {
-          // Start processing this job
-          setVideoJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'downloading', statusMessage: 'Starting download...' } : j));
-        }
-      });
-    };
-    
-    const interval = setInterval(processQueue, 1000);
-    return () => clearInterval(interval);
-  }, [videoJobs]);
-
-  useEffect(() => {
     const tick = () => {
        setVideoJobs(currentJobs => {
-        return currentJobs.map(job => {
-          if (job.status === 'downloading') {
-            const downloadedBytes = (job.progress / 100) * VIDEO_SIZE;
-            const newDownloadedBytes = downloadedBytes + (DOWNLOAD_SPEED * (TICK_INTERVAL / 1000));
-            let newProgress = (newDownloadedBytes / VIDEO_SIZE) * 100;
-            
-            if (newProgress >= 100) {
-              newProgress = 100;
-              // Randomly fail some jobs for demonstration
-              if (Math.random() < 0.2) {
-                 return { ...job, status: 'failed', statusMessage: 'Download failed unexpectedly.', progress: 100, errorMessage: 'Network error during download.' };
-              }
-              return { ...job, status: 'converting', statusMessage: 'Downloaded. Starting conversion...', progress: 0 };
-            }
-            
-            return { ...job, progress: newProgress, statusMessage: `Downloading... (${(DOWNLOAD_SPEED / 1024 / 1024).toFixed(1)} MB/s)` };
-          } 
-          
-          if (job.status === 'converting') {
-            const newProgress = job.progress + (100 / (CONVERT_TIME * (1000 / TICK_INTERVAL)));
+        const activeJob = currentJobs.find(job => job.status === 'downloading' || job.status === 'converting');
 
-            if (newProgress >= 100) {
-              return { ...job, status: 'ready', statusMessage: 'Conversion complete!', progress: 100 };
+        if (activeJob) {
+          // An existing job is processing, update it
+          return currentJobs.map(job => {
+            if (job.id !== activeJob.id) return job;
+
+            if (job.status === 'downloading') {
+              const speedMBps = DOWNLOAD_SPEED / 1024 / 1024;
+              const downloadedBytes = (job.progress / 100) * job.size;
+              const newDownloadedBytes = downloadedBytes + (DOWNLOAD_SPEED * (TICK_INTERVAL / 1000));
+              let newProgress = (newDownloadedBytes / job.size) * 100;
+              const remainingBytes = job.size - newDownloadedBytes;
+              const eta = remainingBytes > 0 ? Math.round(remainingBytes / DOWNLOAD_SPEED) : 0;
+              
+              if (newProgress >= 100) {
+                 if (Math.random() < 0.1) { // 10% failure rate
+                   return { ...job, status: 'failed', statusMessage: 'Download failed unexpectedly.', progress: 100, errorMessage: 'Network error during download.', speed: undefined, eta: undefined };
+                 }
+                return { ...job, status: 'converting', statusMessage: 'Downloaded. Converting...', progress: 0, speed: undefined, eta: undefined };
+              }
+              return { ...job, progress: newProgress, statusMessage: `Downloading...`, speed: speedMBps, eta };
             }
-            return { ...job, progress: newProgress, statusMessage: 'Converting video...' };
+
+            if (job.status === 'converting') {
+              const newProgress = job.progress + (100 / (CONVERT_TIME * (1000 / TICK_INTERVAL)));
+              if (newProgress >= 100) {
+                return { ...job, status: 'ready', statusMessage: 'Conversion complete!', progress: 100, speed: undefined, eta: undefined };
+              }
+              return { ...job, progress: newProgress, statusMessage: 'Converting...' };
+            }
+            return job;
+          });
+        } else {
+          // No active job, find a pending one to start
+          const pendingJobIndex = currentJobs.findIndex(job => job.status === 'pending');
+          if (pendingJobIndex !== -1) {
+            return currentJobs.map((job, index) => 
+              index === pendingJobIndex 
+                ? { ...job, status: 'downloading', statusMessage: 'Starting download...' }
+                : job
+            );
           }
-          
-          return job;
-        });
+        }
+        
+        return currentJobs; // No changes
       });
     };
 
@@ -107,7 +109,7 @@ export function ConverterPage() {
     return () => clearInterval(timer);
   }, []);
 
-  const isProcessing = videoJobs.some(job => job.status === 'downloading' || job.status === 'converting');
+  const isQueueActive = videoJobs.some(job => job.status === 'downloading' || job.status === 'converting' || job.status === 'pending');
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -123,7 +125,7 @@ export function ConverterPage() {
       
       <main className="container mx-auto max-w-4xl flex-grow px-4">
         <div className="mb-8">
-          <UrlInputForm onAddJob={handleAddVideoJob} isProcessing={isProcessing}/>
+          <UrlInputForm onAddJob={handleAddVideoJob} isProcessing={isQueueActive}/>
         </div>
         
         <div className="mb-8">

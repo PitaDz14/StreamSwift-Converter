@@ -15,7 +15,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Sparkles, Loader, Wand2, Youtube, X } from 'lucide-react';
 import type { IntelligentFormatSuggestionOutput } from '@/ai/flows/intelligent-format-suggestion';
 import { useToast } from '@/hooks/use-toast';
@@ -122,7 +121,7 @@ export function UrlInputForm({ onAddJob, isProcessing }: UrlInputFormProps) {
                 <Loader className="mr-2 h-4 w-4 animate-spin" /> Processing Queue...
               </>
             ) : (
-              'Convert Now'
+              'Start Conversion'
             )}
           </Button>
         </form>

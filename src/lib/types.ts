@@ -14,4 +14,7 @@ export type VideoJob = {
   statusMessage: string;
   progress: number; // 0-100
   errorMessage?: string;
+  size: number; // in bytes
+  speed?: number; // in MB/s
+  eta?: number; // in seconds
 };
