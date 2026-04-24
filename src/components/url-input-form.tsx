@@ -20,6 +20,7 @@ import { Sparkles, Loader, Wand2, Youtube, X } from 'lucide-react';
 import type { IntelligentFormatSuggestionOutput } from '@/ai/flows/intelligent-format-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from './ui/card';
+import { Badge } from '@/components/ui/badge';
 
 const formSchema = z.object({
   url: z.string().url({ message: 'Please enter a valid YouTube URL.' }),
